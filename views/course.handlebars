@@ -1,0 +1,17 @@
+<h1>{{courses.name}}</h1>
+<table id='studentsInCourse'>
+	<tr>
+		<th>Student Name</th>
+		<th>Professor</th>
+		<th>Semester/Year Taken</th>
+	</tr>
+	<tbody id='courseTableBody'>
+	{{#each studentsInCourse}}
+		<tr class="row">
+			<th><a href="/student/{{this._id}}">{{this.stuName}}</a></th>
+			<th>{{this.prof}}</th>
+			<th>{{this.smstrYr}}</th>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>

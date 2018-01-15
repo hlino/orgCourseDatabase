@@ -1,0 +1,30 @@
+<h1>Add a new class:</h1>
+<form id="class">
+	<a>Class Name:</a><input name="className" id="className" type="text" placeholder="CMSC132"/>
+	<br>
+	<a>Professor Name:</a><input name="professor" id="professor" type="text" placeholder="John Doe"/>
+	<br>
+	<a>Semester Taken:</a><input name="semesterTaken" id="semesterTaken" type="text" placeholder="Fall"/>
+	<br>
+	<a>Year Taken:</a><input name="yearTaken" id="yearTaken" type="text" placeholder="2017"/>
+	<br>
+	<button>Add</button>
+	<h3 id='userID' style="visibility: hidden;">{{student._id}}</h3>
+</form>
+<h1>Classes Taken By {{student.name}}:</h1>
+<table id='studentTable'>
+	<tr>
+		<th>Class</th>
+		<th>Professor</th>
+		<th>Year Taken</th>
+		<th>Semester Taken</th>
+	</tr>
+	{{#each student.classesTaken}}
+	<tr>
+		<th>{{this.name}}</th>
+		<th>{{this.professor}}</th>
+		<th>{{this.yearTaken}}</th>
+		<th>{{this.semesterTaken}}</th>
+	</tr>
+	{{/each}}
+</table>

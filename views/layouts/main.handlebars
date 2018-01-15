@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/public/css/main.css">
+    <title>Final Project</title>
+</head>
+<ul class="nav">
+	<li><a class='navLink' href="/">Home</a></li>
+	<li><a class='navLink' href="/addStudent">Add New Student</a></li>
+	<li><a class='navLink' href="/allStudents">View All Students</a></li>
+</ul>
+<body>
+    {{{body}}}
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+	<script>
+	var socket = io();
+
+	var semesterHTML="<select class='semesterSelector'><option>--</option>";
+	var checkedCourses = [];
+
+	// Shorthand for $( document ).ready()
+	// is called when the html page loads/isReady
+	$(function() {
+
+		var courseTable = $('#allCoursesBody');
+
+		if(courseTable != null){
+
+			console.log("WE ARE UPDATING COURSES");
+			
+			//$.get("http://api.umd.io/v0/courses?semester=012345", function(data){
+			var semesters = ["201401","201405","201408","201412","201501","201505","201508","201308","201312","201512","201601","201605","201608","201612","201701","201705","201708","201712","201801"];
+
+			//console.log("List of current Semesters: "+semesters);
+
+			for(var i=semesters.length-1; i>=0;i--){
+
+				var year = semesters[i].substring(0,4);
+				var semester = semesters[i].substring(4);
+
+				var s = "";
+
+				if(semester == "01"){
+					s = s.concat("Spring ");
+				}
+				else if(semester == "08"){
+					s = s.concat("Fall ");
+				}
+				else if(semester == "05"){
+					s = s.concat("Summer ");
+				}
+				else{
+					s = s.concat("Winter ");
+				}
+
+				s = s.concat(year);
+
+				semesterHTML = semesterHTML.concat("<option value='"+year+semester+"'>"+s+"</option>");
+			}
+
+			semesterHTML = semesterHTML.concat("</select>");
+			//});
+			
+
+			//populates the allCourses table
+		    $.get("http://api.umd.io/v0/courses", function(data){
+
+		    	console.log("Populating Courses... ");
+
+		    	var emptyDropDown = "<select class='professorOptions'></select>"
+
+		    	for(var i=0; i < data.length; i++){
+
+		    		row = "<tr class='row'><th class='courseID'>"+data[i].course_id+"</th><th>"+semesterHTML+"</th><th>"+emptyDropDown+"</th><th><input class='courseSelectCheckBox' type='checkbox' name='courseCheck' value='"+data[i].course_id+"'></input></th></tr>";
+
+		    		courseTable.append(row);
+		   		}
+		    });
+
+		    //called when a semester is selected when adding a class
+			$('body').on('change', '.semesterSelector', function(){
+
+				console.log("CHANGED semester");
+
+				var row = $(this).parents('tr');
+
+				//selected semester/year of the selected row
+				var semesterYearNum = $(this).find('option:selected').val();
+
+				//course id of the selected row
+				var course_id = row.find('.courseID').text();
+
+				//This is the selector object to update with the list of possible professors
+				var professorSelector = row.find('.professorOptions');
+
+				//clears the selector of any options from previous semesters
+				professorSelector.empty();
+
+				$.get("http://api.umd.io/v0/professors?courses="+course_id+"&semester="+semesterYearNum, function(data){
+
+					if(data == null){
+						var option = "<option value='NA'>Not Offered</option>"
+
+						professorSelector.append(option);
+					}
+
+					for(var i=0; i < data.length; i++){
+
+						var profName = data[i].name;
+
+						var option = "<option value='"+profName+"'>"+profName+"</option>"
+
+						professorSelector.append(option);
+					}
+				});
+			});	
+		}
+	});
+
+	//adds selected courses for specified student
+	$('#submitCourses').on('click',function(){
+
+		for(var i=0; i<checkedCourses.length; i++){
+
+			var ele = checkedCourses[i];
+
+			$.ajax({
+				type: "POST",
+				url: '/api/addCourse',
+				data: ele,
+				success: function(data, status){
+					console.log(data);
+				}
+			});
+		}
+	});	
+
+	//TODO: Possibley change this once after first try so it doesn't have to calculate everytime object is clicked
+	//This should populate the selector with options for possible majors when it is clicked on
+	//TODO: If you do keep this move it to on page load
+	$('#majorSelector').on('focusin', function(i){
+
+		$.get("http://api.umd.io/v0/courses/departments", function(data){
+
+			console.log(data);
+
+			for(var i=0; i<data.length; i++){
+
+				var major = data[i].dept_id;
+
+				var x = $("#majorSelector");
+				var option = "<option value="+major+">"+major+"</option>"
+				x.append(option); 
+			}
+		});
+	});
+
+	$('#students').submit(function(){
+
+		console.log("Submit Pressed");
+
+		var name = $('#name').val();
+		var major = $('#majorSelector option:selected').val();
+		var year = $('#yearSelector option:selected').val();
+		var gradButton = $('input[name=form]:checked');
+		var grad = gradButton.val();
+		gradButton.prop('checked', false);
+		
+		console.log("GRADUATED: "+grad);
+
+		if(grad == "Yes"){
+			year = "NA";
+		}
+
+		$.ajax({
+			type: "POST",
+			url: '/api/addStudent',
+			data: {
+				name: name,
+				major: major,
+				year: year,
+				graduated: grad
+			},
+			success: function(data, status){
+				//the data recieved here is returned from the post request
+				//we want the student ID then we want to do a get request to /studentAddCourse/:id
+				console.log(data);
+
+				//loads the studentAddCourse page rendering the screen to enter courses for the newly created student
+				//$.get('./studentAddCourse/'+data, function(data){});
+				window.location.replace('./studentAddCourse/'+data);
+			}
+		});
+
+		//TODO: Forward the webpage to the add student section
+		//maybe do a jquery get request to a directory created on the server
+		//window.location.replace("http://stackoverflow.com");
+		return false;
+	});
+
+	//called when a checkbox is changed in the addcourse page
+	$('body').on('change', '.courseSelectCheckBox', function(){
+
+		console.log("CHECK BOX CHANGED");
+
+		//this is the row that the checkd box is
+		var row = $(this).parents('tr');
+		var innerHTML = row.html();
+
+		console.log(innerHTML);
+
+		var course_id = $(this).val();
+		var professor = row.find('.professorOptions option:selected').val();
+		var semesterYear = row.find('.semesterSelector option:selected').text();
+
+		var temp = {
+			course_id: course_id,
+			professor: professor,
+			semesterYear: semesterYear,
+			student_id: App.stu_id,
+			innerHTML: innerHTML
+		};
+
+		if($(this).is(':checked')){
+
+			checkedCourses.push(temp);
+		}
+		else{
+			var index = _.findIndex(checkedCourses, temp);
+
+			if(index == -1){
+				throw "This should not happen";
+			}
+
+			checkedCourses = checkedCourses.splice(index, -1)
+		}
+	});
+
+	$('#courseSearchInput').on("keyup", function(i){
+
+		var input = $('#courseSearchInput').val().toUpperCase();
+		var courseTable = $('#allCoursesBody');
+
+		//removes the rows in the table for the results to be displayed
+		$('.row').each(function(){
+			this.remove();
+		});
+
+		$("#notFound").css("visibility", "hidden");
+		console.log("LENGTH: "+input.length);
+
+		if(input.length == 0){
+
+			//populates the allCourses table
+		    $.get("http://api.umd.io/v0/courses", function(data){
+
+		    	console.log("Populating Courses... ");
+
+		    	var emptyDropDown = "<select class='professorOptions'></select>"
+
+		    	for(var i=0; i < data.length; i++){
+
+		    		var res = _.findWhere(checkedCourses, {course_id: data[i].course_id});
+
+		    		if( res == null){
+
+		    			var innerHTML = "<th class='courseID'>"+data[i].course_id+"</th><th>"+semesterHTML+"</th><th>"+emptyDropDown+"</th><th><input class='courseSelectCheckBox' type='checkbox' name='courseCheck' value='"+data[i].course_id+" checked'></input></th>";
+		    		}
+		    		else{
+		    			var innerHTML = res.innerHTML;
+		    		}
+
+		    		row = "<tr class='row'>"+innerHTML+"</tr>";
+
+		    		courseTable.append(row);
+		   		}
+		    });
+		}
+		else{
+
+			if(input.length == 4){
+
+				//populates the allCourses table
+			    $.get("http://api.umd.io/v0/courses?dept_id="+input, function(data){
+
+			    	console.log("Populating Courses... ");
+
+			    	var emptyDropDown = "<select class='professorOptions'></select>"
+
+			    	for(var i=0; i < data.length; i++){
+
+						var res = _.findWhere(checkedCourses, {course_id: data[i].course_id});
+
+			    		if( res == null){
+
+			    			var innerHTML = "<th class='courseID'>"+data[i].course_id+"</th><th>"+semesterHTML+"</th><th>"+emptyDropDown+"</th><th><input class='courseSelectCheckBox' type='checkbox' name='courseCheck' value='"+data[i].course_id+" checked'></input></th>";
+			    		}
+			    		else{
+			    			var innerHTML = res.innerHTML;
+		    			}
+
+		    			row = "<tr class='row'>"+innerHTML+"</tr>";	
+
+			    		courseTable.append(row);
+			   		}
+
+			   		if(data.length == 0){
+			   			$("#notFound").css("visibility", "visible");
+			   		}
+			    });
+			}
+			else if(input.length >= 7){
+
+				//populates the allCourses table
+			    $.get("http://api.umd.io/v0/courses?course_id="+input, function(data){
+
+			    	console.log("Populating Courses...?????"+data);
+
+			    	var emptyDropDown = "<select class='professorOptions'></select>"
+
+			    	for(var i=0; i < data.length; i++){
+
+			    		var res = _.findWhere(checkedCourses, {course_id: data[i].course_id});
+
+			    		if( res == null){
+
+			    			var innerHTML = "<th class='courseID'>"+data[i].course_id+"</th><th>"+semesterHTML+"</th><th>"+emptyDropDown+"</th><th><input class='courseSelectCheckBox' type='checkbox' name='courseCheck' value='"+data[i].course_id+" checked'></input></th>";
+			    		}
+			    		else{
+			    			var innerHTML = res.innerHTML;
+			    		}
+
+			    		row = "<tr class='row'>"+innerHTML+"</tr>";
+
+			    		courseTable.append(row);
+			   		}
+
+			   		if(data.length == 0){
+			   			$("#notFound").css("visibility", "visible");
+			   		}
+			    });
+			}
+			else{
+				$("#notFound").css("visibility", "visible");
+			}
+		}
+	});
+
+	$('#searchInput').on("keyup", function(i) {
+
+		console.log("Typing...");
+		var input = $("#searchInput").val();
+
+		//removes the rows in the table for the results to be displayed
+		$('.row').each(function(){
+			this.remove();
+		});
+
+		if(input.length == 0){
+
+			$("#notFound").css("visibility", "hidden");
+
+			$.get("./api/getCourses", function(data){
+
+				console.log("Reloading all Students:");
+				for(var i = 0; i < data.length; i++){
+
+					console.log(data[i]);
+
+					var course = data[i];
+
+					var table = $('#courseTableBody');
+
+				    row = "<tr data-id="+course._id+" class='row'><th><a href='"+course.name+"'>"+course.name+"</a></th></tr>";
+
+				    table.append(row);
+				}
+			});
+		}
+		else{
+
+			$.get("./api/courseQuery/"+input, function(data){
+
+				if(data.length == 0){
+
+					$("#notFound").css("visibility", "visible");
+				}
+				else{
+
+					$("#notFound").css("visibility", "hidden");
+
+					console.log("SHOWING RESULTS:");
+
+					for(var i = 0; i < data.length; i++){
+
+						var course = data[i];
+
+						console.log(course.name);
+
+						var table = $('#courseTableBody');
+
+					    row = "<tr data-id="+course._id+" class='row'><th><a href='"+course.name+"'>"+course.name+"</a></th></tr>";
+
+					    table.append(row);
+					}
+				}
+			});
+		}
+	});
+
+	/*************************************************************************************************/
+
+	$('#class').submit(function(){
+		var className = $('#className').val();
+		$('#className').val("");
+		var professor = $('#professor').val();
+		$('#professor').val("");
+		var yearTaken = $('#yearTaken').val();
+		$('#yearTaken').val("");
+		var semesterTaken = $('#semesterTaken').val();
+		$('#semesterTaken').val("");
+		var _id = $('#userID').text();
+
+		console.log("ID: "+_id);
+
+		$.ajax({
+			type: "POST",
+			url: '/api/addClass',
+			data: {
+				class: className,
+				professor: professor,
+				yearTaken: yearTaken,
+				semesterTaken: semesterTaken,
+				id: _id
+			},
+			success: function(data, status){
+				console.log(data);
+			}
+		});
+		return false;
+	});
+
+	//Use Express-State
+	//https://github.com/UMD-CS-STICs/389Kfall17/blob/master/lectures/week_12/express_state.md
+	$('#confirmRemove').submit(function(){
+
+		console.log("REMOVE");
+		console.log("ID: "+$('#userID').text());
+		console.log("INDEX: "+$('#index').text());
+		//make a post request giving the user id and the index in the table that we have to remove from
+
+		$.ajax({
+			type: "POST",
+			url: '/api/remove',
+			data: {
+				id: $('#userID').text(),
+				index: $('#index').text()
+			},
+			success: function(data, status){
+				console.log(data);
+			}
+		});
+
+		return false;
+	});
+
+	socket.on('new student', function(stu){
+		var table = $('#studentTableBody');
+
+	    row = "<tr data-id="+stu._id+" class='row'><th>"+stu.name+"</th><th>"+stu.major+"</th><th>"+stu.year+"</th><th>"+stu.graduated+"</th><th><a href='/classes/"+stu._id+"'>Classes Taken</a></th></tr>";
+
+	    table.append(row);
+	});
+
+	socket.on('removedLast', function(stu_id){
+
+		$('#removeQuestion').text("REMOVED");
+		$('#removeButton').css("visibility", "hidden");
+
+		var el = document.getElementById("studentTable");
+
+		console.log("INSIDE THE IO SOCKET: "+el);
+
+		if(el != null){
+			//document.getElementById("studentTable").deleteRow(index);
+			var row = $('tr').find("[data-id='"+stu_id+"']");
+
+			//var element = document.querySelectorAll("[data-id='"+stu_id+"'']");
+			//element.parentNode.removeChild(element);
+
+			console.log("TRYING TO REMOVE ROW: "+row);
+			row.remove();
+		}
+	});
+	</script>
+</body>
+	<script>
+    	{{{state}}}
+	</script>
+</html>
+

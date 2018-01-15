@@ -1,0 +1,21 @@
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Major</th>
+		<th>Year</th>
+		<th>Graduated</th>
+		<th>Classes Taken</th>
+	</tr>
+	<tbody>
+	{{#each students}}
+	<tr class="row">
+		<th>{{this.name}}</th>
+		<th>{{this.major}}</th>
+		<th>{{this.year}}</th>
+		<th>{{this.graduated}}</th>
+		<!-- This is a link to a seperate page that will display the classes taken by the students name -->
+		<th><a href="/classes/{{this._id}}">Classes Taken</a></th>
+	</tr>
+	{{/each}}
+	</tbody>
+</table>

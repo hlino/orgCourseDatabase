@@ -1,0 +1,24 @@
+{{#if students}}
+<h2>{{title}}</h2>
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Major</th>
+		<th>Year</th>
+		<th>Graduated</th>
+		<th>Classes Taken</th>
+	</tr>
+	<tbody>
+	<tr class="row">
+		<th>{{students.name}}</th>
+		<th>{{students.major}}</th>
+		<th>{{students.year}}</th>
+		<th>{{students.graduated}}</th>
+		<!-- This is a link to a seperate page that will display the classes taken by the students name -->
+		<th><a href="/classes/{{students._id}}">Classes Taken</a></th>
+	</tr>
+	</tbody>
+</table>
+{{else}}
+<h2>There are no students to view.</h2>
+{{/if}}

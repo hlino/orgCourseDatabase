@@ -1,0 +1,32 @@
+/* Please add your own! */
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+ul{
+
+	padding: 10px;
+	background-color: black
+}
+li{
+
+	display: inline;
+	padding: 0px 10px 0px 10px;
+}
+.navLink{
+	color: white;
+	text-decoration: none;
+	background-color: grey;
+	padding: 5px;
+	border-radius: 5px
+}
+

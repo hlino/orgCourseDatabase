@@ -1,0 +1,21 @@
+<h1>{{student.name}}:</h1>
+<h3>Major: {{student.major}}</h3>
+<h3>Graduated: {{student.graduated}}</h3>
+<h3>Year: {{student.year}}</h3>
+<h3>Courses Taken:</h3>
+<table id='studentProfCoursesTable'>
+	<tr>
+		<th>Name</th>
+		<th>Professor</th>
+		<th>Semester/Year Taken</th>
+	</tr>
+	<tbody id='studentProfCoursesTableBody'>
+	{{#each student.classesTaken}}
+		<tr>
+			<th><a href="/course/{{this.name}}">{{this.name}}</a></th>
+			<th>{{this.professor}}</th>
+			<th>{{this.semesterYearTaken}}</th>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>

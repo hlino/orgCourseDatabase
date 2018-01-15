@@ -1,0 +1,10 @@
+{{#if last}}	
+	<form id='confirmRemove'>
+		<h2 id='removeQuestion'>Are you sure you want to remove {{last.name}}?</h2>
+		<button id='removeButton'>Remove</button>
+		<h3 id='userID' style="visibility: hidden;">{{last._id}}</h3>
+		<h3 id='index' style="visibility: hidden;">{{index}}</h3>
+	</form>
+{{else}}
+	<h2>There are currently no students to remove.</h2>
+{{/if}}

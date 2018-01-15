@@ -1,0 +1,16 @@
+<h3>Search:</h3>
+<input id="searchInput" type="text" placeholder="Ex: CMSC132">
+<br>
+<table id='courseTable'>
+	<tr>
+		<th>Course Name</th>
+	</tr>
+	<tbody id='courseTableBody'>
+	{{#each courseNames}}
+	<tr class="row">
+		<th><a href="/course/{{this}}">{{this}}</a></th>
+	</tr>
+	{{/each}}
+	</tbody>
+</table>
+<h3 id="notFound" style="visibility: hidden;">No Results</h3>

@@ -1,0 +1,15 @@
+<h1>All Students</h1>
+<table id='allStudentsTable'>
+	<tr>
+		<th>Student Name</th>
+		<th>Add Course</th>
+	</tr>
+	<tbody id='allStudentsTableBody'>
+	{{#each students}}
+		<tr class="row">
+			<th><a href="/student/{{_id}}">{{name}}</a></th>
+			<th><a href="/studentAddCourse/{{_id}}">Add Course</a></th>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>
